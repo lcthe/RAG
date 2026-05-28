@@ -1,0 +1,17 @@
+﻿# RAG 学习项目依赖
+# 使用方式: conda run -n rag pip install -r requirements.txt
+
+# Day 1 - 文档加载与解析
+pypdf>=4.0.0
+markdown>=3.5.0
+fpdf2>=2.8.0
+
+# Day 2 - 文本分段 (后续添加)
+# langchain>=0.2.0
+
+# Day 3 - Embedding (后续添加)
+# sentence-transformers>=2.7.0
+
+# Day 4 - 向量存储 (后续添加)
+# chromadb>=0.5.0
+# faiss-cpu>=1.7.0
