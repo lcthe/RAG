@@ -1,4 +1,4 @@
-# RAG Full-Stack Learning Project / RAG 全栈学习项目
+﻿# RAG Full-Stack Learning Project / RAG 全栈学习项目
 
 > 7-day hands-on RAG system from scratch + Web Console (MaxKB Theme)  
 > 7 天从零搭建 RAG 系统 + Web 控制台（MaxKB 主题风格）
@@ -78,16 +78,21 @@ cd ..
 pip install -r web_app/backend/requirements.txt
 cd web_app/frontend && npm install
 
-# 3. Start backend
+# 3. Configure LLM API key（choose one, required for real answers）
+set DEEPSEEK_API_KEY=sk-your-key-here
+set DEEPSEEK_MODEL=deepseek-v4-flash
+rem set OPENAI_API_KEY=sk-your-key-here
+
+# 4. Start backend
 cd D:\code\RAG
 set TRANSFORMERS_OFFLINE=1
 set HF_HUB_OFFLINE=1
-python -m uvicorn web_app.backend.app.main:app --host 127.0.0.1 --port 18762
+conda run -n rag python -m uvicorn web_app.backend.app.main:app --host 127.0.0.1 --port 18762
 
-# 4. Start frontend（new terminal）
+# 5. Start frontend（new terminal）
 cd D:\code\RAG\web_app\frontend && npm run dev
 
-# 5. Open
+# 6. Open
 #   Chat / 问答:  http://localhost:19123
 #   Admin / 后台: http://localhost:19123/admin
 ```

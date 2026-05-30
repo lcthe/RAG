@@ -52,3 +52,37 @@ async def ping() -> bool:
         return await r.ping()
     except Exception:
         return False
+
+
+# === Chat History in Redis ===
+
+async def save_conversation(conv_id: str, messages: list, title: str = ""):
+    """Save full conversation to Redis."""
+    r = await get_redis()
+    key = f"rag:conv:{conv_id}"
+    data = {"id": conv_id, "title": title, "messages": messages}
+    await r.setex(key, 86400 * 7, json.dumps(data, ensure_ascii=False))  # 7 days TTL
+
+async def get_conversation(conv_id: str) -> dict | None:
+    """Load conversation from Redis."""
+    r = await get_redis()
+    data = await r.get(f"rag:conv:{conv_id}")
+    return json.loads(data) if data else None
+
+async def list_conversations() -> list[dict]:
+    """List all conversation summaries (id + title)."""
+    r = await get_redis()
+    keys = await r.keys("rag:conv:*")
+    result = []
+    for k in keys:
+        data = await r.get(k)
+        if data:
+            c = json.loads(data)
+            result.append({"id": c["id"], "title": c["title"]})
+    result.sort(key=lambda x: x["id"], reverse=True)
+    return result
+
+async def delete_conversation(conv_id: str):
+    """Delete a conversation."""
+    r = await get_redis()
+    await r.delete(f"rag:conv:{conv_id}")

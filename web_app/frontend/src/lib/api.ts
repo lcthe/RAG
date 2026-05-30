@@ -1,4 +1,4 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18762";
+export const API_BASE = "";
 
 export interface ChatResponse {
   answer: string;
@@ -27,7 +27,7 @@ export interface LogEntry {
 }
 
 export async function chatQuery(question: string, topK?: number): Promise<ChatResponse> {
-  const res = await fetch(`${API_BASE}/api/chat`, {
+  const res = await fetch(`/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ question, top_k: topK }),
@@ -37,25 +37,25 @@ export async function chatQuery(question: string, topK?: number): Promise<ChatRe
 }
 
 export async function getInfo(): Promise<Record<string, any>> {
-  const res = await fetch(`${API_BASE}/api/chat/info`);
+  const res = await fetch(`/api/chat/info`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
 export async function getStats(): Promise<StatsResponse> {
-  const res = await fetch(`${API_BASE}/api/admin/stats`);
+  const res = await fetch(`/api/admin/stats`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
 export async function getLogs(limit = 100): Promise<LogEntry[]> {
-  const res = await fetch(`${API_BASE}/api/admin/logs?limit=${limit}`);
+  const res = await fetch(`/api/admin/logs?limit=${limit}`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
 export async function clearCache(): Promise<void> {
-  await fetch(`${API_BASE}/api/admin/cache/clear`, { method: "POST" });
+  await fetch(`/api/admin/cache/clear`, { method: "POST" });
 }
 
 export interface DocInfo {
@@ -66,7 +66,7 @@ export interface DocInfo {
 }
 
 export async function getDocuments(): Promise<DocInfo[]> {
-  const res = await fetch(`${API_BASE}/api/admin/documents`);
+  const res = await fetch(`/api/admin/documents`);
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
@@ -74,7 +74,7 @@ export async function getDocuments(): Promise<DocInfo[]> {
 export async function uploadDocument(file: File): Promise<{ status: string; filename: string; chunks: number }> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch(`${API_BASE}/api/admin/documents/upload`, {
+  const res = await fetch(`/api/admin/documents/upload`, {
     method: "POST",
     body: formData,
   });
@@ -83,7 +83,32 @@ export async function uploadDocument(file: File): Promise<{ status: string; file
 }
 
 export async function reloadDocuments(): Promise<{ status: string; chunks: number }> {
-  const res = await fetch(`${API_BASE}/api/admin/documents/reload`, { method: "POST" });
+  const res = await fetch(`/api/admin/documents/reload`, { method: "POST" });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
+}
+
+
+export async function getHistory(): Promise<{ id: string; title: string }[]> {
+  const res = await fetch(`/api/chat/history`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function getConversation(convId: string): Promise<{ id: string; title: string; messages: any[] }> {
+  const res = await fetch(`/api/chat/history/${convId}`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function saveConversation(convId: string, messages: any[], title: string = ""): Promise<void> {
+  await fetch(`/api/chat/history/save`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: convId, messages, title }),
+  });
+}
+
+export async function deleteConversation(convId: string): Promise<void> {
+  await fetch(`/api/chat/history/${convId}`, { method: "DELETE" });
 }

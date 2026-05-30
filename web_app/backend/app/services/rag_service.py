@@ -72,15 +72,12 @@ class RAGService:
     async def query(self, question: str, top_k: int | None = None) -> dict:
         k = top_k or DEFAULT_TOP_K
 
-        cached = await cache_service.get_cached(question, k)
-        if cached:
-            return cached
-
         qv = self.embedding.encode(question)
         if isinstance(qv, list) and qv and isinstance(qv[0], list):
             qv = qv[0]
 
         results = await self._store.search(qv, top_k=k)
+
         # Detect greetings / small talk
         greetings = ["你好", "hello", "hi", "嗨", "早上好", "下午好", "晚上好", "在吗", "在不在", "你是谁", "你叫什么"]
         is_greeting = any(g in question.lower() for g in greetings)
@@ -94,6 +91,11 @@ class RAGService:
                 "retrieval_count": 0,
             }
             return result
+
+        # Check cache AFTER greeting detection
+        cached = await cache_service.get_cached(question, k)
+        if cached:
+            return cached
 
         context_parts = [f"[Source score={r['score']:.3f}]\n{r['text'][:500]}" for r in results]
 
@@ -135,25 +137,6 @@ class RAGService:
         }
 
         await cache_service.set_cached(question, k, result)
-
-        # Log query
-        try:
-            from sqlalchemy import insert
-            async with engine.begin() as conn:
-                await conn.execute(
-                    insert(QueryLog).values(
-                        question=question,
-                        answer_preview=result["answer"][:200],
-                        latency_ms=result["latency_ms"],
-                        retrieval_count=result["retrieval_count"],
-                        model_used=result["model"],
-                    )
-                )
-        except Exception:
-            pass
-
-        return result
-
     async def get_info(self) -> dict:
         return {
             "chunks": await self._store.count(),

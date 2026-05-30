@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { chatQuery, getInfo } from "@/lib/api";
+import { chatQuery, getInfo, getHistory, getConversation, saveConversation, deleteConversation } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -113,14 +113,15 @@ export default function ChatPage() {
     if (textareaRef.current) textareaRef.current.focus();
   };
 
-  const loadHistory = (id: string) => {
+  const loadHistory = async (id: string) => {
     setActiveHistory(id);
     // In a real app, load messages from backend
   };
 
-  const deleteHistory = (id: string, e: React.MouseEvent) => {
+  const deleteHistory = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setHistory(prev => prev.filter(h => h.id !== id));
+    deleteConversation(id).catch(() => {});
     if (activeHistory === id) {
       setActiveHistory(null);
       setMessages([]);
