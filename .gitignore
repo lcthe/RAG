@@ -15,3 +15,21 @@ Desktop.ini
 
 # Temp files
 src/_temp.py
+
+# Web app - frontend
+web_app/frontend/node_modules/
+web_app/frontend/.next/
+web_app/frontend/*.tsbuildinfo
+
+# Web app - backend data
+web_app/backend/data/
+web_app/data/
+web_app/backend/*.db
+
+# ChromaDB persistence
+**/chroma_db/
+**/chroma.sqlite3
+
+# Temp
+body.json
+fix_docs.py
