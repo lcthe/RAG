@@ -81,9 +81,41 @@ class RAGService:
             qv = qv[0]
 
         results = await self._store.search(qv, top_k=k)
+        # Detect greetings / small talk
+        greetings = ["你好", "hello", "hi", "嗨", "早上好", "下午好", "晚上好", "在吗", "在不在", "你是谁", "你叫什么"]
+        is_greeting = any(g in question.lower() for g in greetings)
+
+        if is_greeting:
+            result = {
+                "answer": "你好！我是基于知识库的智能问答助手，有什么可以帮助你的吗？😊",
+                "sources": [],
+                "latency_ms": 0,
+                "model": self._llm.model_name,
+                "retrieval_count": 0,
+            }
+            return result
 
         context_parts = [f"[Source score={r['score']:.3f}]\n{r['text'][:500]}" for r in results]
-        context = "\n\n".join(context_parts) if context_parts else "[未检索到相关内容]"
+
+        if not context_parts:
+            messages = [
+                {"role": "system", "content": "你是一个智能问答助手。用户的问题在知识库中没有找到相关内容，请友善地告知用户暂时无法回答，并引导用户提供更多信息或换个问题。"},
+                {"role": "user", "content": question},
+            ]
+            start = time.time()
+            resp = await self._llm.chat(messages)
+            latency = (time.time() - start) * 1000
+            result = {
+                "answer": resp.content,
+                "sources": [],
+                "latency_ms": round(latency, 1),
+                "model": resp.model,
+                "retrieval_count": 0,
+            }
+            await cache_service.set_cached(question, k, result)
+            return result
+
+        context = "\n\n".join(context_parts)
 
         messages = [
             {"role": "system", "content": "你是一个智能助手，基于知识库回答问题。只根据上下文回答，没有信息就坦诚告知。回答简洁准确。"},
@@ -130,6 +162,26 @@ class RAGService:
             "vector_store": "chroma",
             "cache": "redis" if await cache_service.ping() else "none",
         }
+
+    async def ingest_file(self, filepath: str) -> int:
+        """Ingest a single file into ChromaDB."""
+        from document_loader import DocumentLoader
+        from text_splitter import get_splitter
+
+        loader = DocumentLoader()
+        splitter = get_splitter("recursive", chunk_size=DEFAULT_CHUNK_SIZE, chunk_overlap=DEFAULT_CHUNK_OVERLAP)
+
+        doc = loader.load(filepath)
+        chunks = splitter.split_documents([doc])
+        texts = [c.content for c in chunks]
+        if not texts:
+            return 0
+        embeddings = self.embedding.encode(texts)
+        if isinstance(embeddings, list) and embeddings and isinstance(embeddings[0], float):
+            embeddings = [embeddings]
+        await self._store.add_chunks(texts, embeddings)
+        print(f"  [INGEST] {Path(filepath).name} -> {len(chunks)} chunks")
+        return len(chunks)
 
     async def clear_data(self):
         await self._store.clear()
