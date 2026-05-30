@@ -328,3 +328,13 @@ W[756]  (云) → [0.18, -0.31, 0.52, 0.75, ...]
 - 实现重排序（Rerank）
 
 关键问题：向量库怎么选？FAISS vs Chroma vs Qdrant？
+
+
+---
+
+## 运行方式
+
+```bash
+conda activate rag
+PYTHONIOENCODING=utf-8 python day3/embeddings.py
+```

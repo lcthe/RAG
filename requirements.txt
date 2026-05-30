@@ -15,3 +15,6 @@ fpdf2>=2.8.0
 # Day 4 - 向量存储 (后续添加)
 # chromadb>=0.5.0
 # faiss-cpu>=1.7.0
+
+# Day 5 - RAG Pipeline (DeepSeek API, OpenAI compatible)
+openai>=1.0.0

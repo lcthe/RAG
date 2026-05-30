@@ -162,3 +162,13 @@ Markdown → HTML → 去标签 → 纯文本。
 - 理解 chunk_size / overlap 等关键参数
 
 关键问题：chunk 太大会导致检索不精确，太小会导致上下文丢失。怎么平衡？
+
+
+---
+
+## 运行方式
+
+```bash
+conda activate rag
+PYTHONIOENCODING=utf-8 python day1/document_loader.py
+```

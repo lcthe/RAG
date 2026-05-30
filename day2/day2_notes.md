@@ -119,3 +119,13 @@ chunk 太小（<200） → 上下文丢失，LLM 缺乏足够信息生成答案
 - 理解向量维度、余弦相似度、归一化
 
 关键问题：同样的文本，用不同模型生成的向量不一样，怎么选？
+
+
+---
+
+## 运行方式
+
+```bash
+conda activate rag
+PYTHONIOENCODING=utf-8 python day2/text_splitter.py
+```
