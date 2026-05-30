@@ -63,6 +63,7 @@ PYTHONIOENCODING=utf-8 python day4/retriever.py          # Day 4: 向量检索
 set DEEPSEEK_API_KEY=你的key
 python day5/rag_pipeline.py
 python day6/agent.py                 # Day 6: Agent + RAG
+python day7/evaluate.py               # Day 7: 评估与优化
 ```
 
 > **注意**：所有脚本都需要在 `conda activate rag` 环境下运行。Day 5 需要设置 `DEEPSEEK_API_KEY` 环境变量。

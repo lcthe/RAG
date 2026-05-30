@@ -1,0 +1,185 @@
+[
+  {
+    "id": 1,
+    "question": "ZY-SP100 是什么产品？",
+    "expected_answer_keywords": [
+      "智能音箱",
+      "智云"
+    ],
+    "expected_doc_keywords": [
+      "product_zy_sp100"
+    ],
+    "category": "产品信息"
+  },
+  {
+    "id": 2,
+    "question": "ZY-SP100 的价格是多少？",
+    "expected_answer_keywords": [
+      "899",
+      "699",
+      "元"
+    ],
+    "expected_doc_keywords": [
+      "product_zy_sp100"
+    ],
+    "category": "价格查询"
+  },
+  {
+    "id": 3,
+    "question": "ZY-SP100 支持哪些音频格式？",
+    "expected_answer_keywords": [
+      "AAC",
+      "LDAC",
+      "aptX"
+    ],
+    "expected_doc_keywords": [
+      "product_zy_sp100"
+    ],
+    "category": "规格查询"
+  },
+  {
+    "id": 4,
+    "question": "ZY-SP100 的尺寸是多少？",
+    "expected_answer_keywords": [
+      "mm",
+      "尺寸"
+    ],
+    "expected_doc_keywords": [
+      "product_zy_sp100"
+    ],
+    "category": "规格查询"
+  },
+  {
+    "id": 5,
+    "question": "智云 API 的认证方式是什么？",
+    "expected_answer_keywords": [
+      "API Key",
+      "token",
+      "认证"
+    ],
+    "expected_doc_keywords": [
+      "api"
+    ],
+    "category": "API文档"
+  },
+  {
+    "id": 6,
+    "question": "API 的请求频率限制是多少？",
+    "expected_answer_keywords": [
+      "限制",
+      "次",
+      "分钟",
+      "QPS"
+    ],
+    "expected_doc_keywords": [
+      "api"
+    ],
+    "category": "API文档"
+  },
+  {
+    "id": 7,
+    "question": "ZY-CV200 是什么产品？",
+    "expected_answer_keywords": [
+      "摄像头",
+      "安防"
+    ],
+    "expected_doc_keywords": [
+      "zy_cv200"
+    ],
+    "category": "产品信息"
+  },
+  {
+    "id": 8,
+    "question": "ZY-CV200 的分辨率是多少？",
+    "expected_answer_keywords": [
+      "4K",
+      "分辨率"
+    ],
+    "expected_doc_keywords": [
+      "zy_cv200"
+    ],
+    "category": "规格查询"
+  },
+  {
+    "id": 9,
+    "question": "用户对 ZY-SP100 的评价怎么样？",
+    "expected_answer_keywords": [
+      "评价",
+      "反馈"
+    ],
+    "expected_doc_keywords": [
+      "feedback"
+    ],
+    "category": "用户反馈"
+  },
+  {
+    "id": 10,
+    "question": "ZY-SP100 适合放在卧室用吗？",
+    "expected_answer_keywords": [
+      "卧室",
+      "尺寸",
+      "适合"
+    ],
+    "expected_doc_keywords": [
+      "product_zy_sp100"
+    ],
+    "category": "推理性问答"
+  },
+  {
+    "id": 11,
+    "question": "买 5 台 ZY-SP100 首发优惠价一共多少钱？",
+    "expected_answer_keywords": [
+      "3495",
+      "699"
+    ],
+    "expected_doc_keywords": [
+      "product_zy_sp100"
+    ],
+    "category": "计算类"
+  },
+  {
+    "id": 12,
+    "question": "你好，你是谁？",
+    "expected_answer_keywords": [
+      "助手",
+      "智能"
+    ],
+    "expected_doc_keywords": [],
+    "category": "闲聊"
+  },
+  {
+    "id": 13,
+    "question": "今天天气怎么样？",
+    "expected_answer_keywords": [
+      "无法",
+      "没有",
+      "知识库"
+    ],
+    "expected_doc_keywords": [],
+    "category": "超出范围"
+  },
+  {
+    "id": 14,
+    "question": "ZY-SP100 的保修期是多久？",
+    "expected_answer_keywords": [
+      "保修",
+      "售后",
+      "联系"
+    ],
+    "expected_doc_keywords": [],
+    "category": "超出范围"
+  },
+  {
+    "id": 15,
+    "question": "ZY-SP100 和 ZY-CV200 分别是什么产品？",
+    "expected_answer_keywords": [
+      "音箱",
+      "摄像头"
+    ],
+    "expected_doc_keywords": [
+      "product_zy_sp100",
+      "zy_cv200"
+    ],
+    "category": "多产品对比"
+  }
+]
