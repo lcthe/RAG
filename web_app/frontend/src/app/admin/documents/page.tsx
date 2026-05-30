@@ -30,16 +30,16 @@ export default function AdminDocuments() {
 
   useEffect(() => { loadData(); }, []);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setUploadMsg("");
     try {
       const res = await uploadDocument(file);
-      setUploadMsg(✅  上传成功，已生成  个分块);
+      setUploadMsg(`✅ ${res.filename} 上传成功，已生成 ${res.chunks} 个分块`);
       await loadData();
-    } catch (err: any) {
+    } catch (err) {
       setUploadMsg("❌ 上传失败: " + (err.message || "未知错误"));
     }
     setUploading(false);
@@ -50,7 +50,7 @@ export default function AdminDocuments() {
     setReloading(true);
     try {
       const res = await reloadDocuments();
-      setUploadMsg(✅ 已重新加载，共  个分块);
+      setUploadMsg(`✅ 已重新加载，共 ${res.chunks} 个分块`);
       await loadData();
     } catch {
       setUploadMsg("❌ 重新加载失败");
@@ -58,7 +58,7 @@ export default function AdminDocuments() {
     setReloading(false);
   };
 
-  const formatSize = (bytes: number) => {
+  const formatSize = (bytes) => {
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
@@ -80,7 +80,7 @@ export default function AdminDocuments() {
         <div className="sidebar-menu">
           {items.map(item => (
             <a key={item.url} href={item.url}
-               className={sidebar-item }>
+               className={`sidebar-item ${item.url === "/admin/documents" ? "active" : ""}`}>
               <span className="icon">{item.icon}</span>{item.label}
             </a>
           ))}

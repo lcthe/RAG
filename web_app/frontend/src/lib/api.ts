@@ -1,4 +1,4 @@
-﻿export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18762";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:18762";
 
 export interface ChatResponse {
   answer: string;
@@ -57,6 +57,7 @@ export async function getLogs(limit = 100): Promise<LogEntry[]> {
 export async function clearCache(): Promise<void> {
   await fetch(`${API_BASE}/api/admin/cache/clear`, { method: "POST" });
 }
+
 export interface DocInfo {
   name: string;
   path: string;
@@ -65,24 +66,24 @@ export interface DocInfo {
 }
 
 export async function getDocuments(): Promise<DocInfo[]> {
-  const res = await fetch(${API_BASE}/api/admin/documents);
-  if (!res.ok) throw new Error(API error: );
+  const res = await fetch(`${API_BASE}/api/admin/documents`);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
 
 export async function uploadDocument(file: File): Promise<{ status: string; filename: string; chunks: number }> {
   const formData = new FormData();
-  formData.append('file', file);
-  const res = await fetch(${API_BASE}/api/admin/documents/upload, {
-    method: 'POST',
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE}/api/admin/documents/upload`, {
+    method: "POST",
     body: formData,
   });
-  if (!res.ok) throw new Error(Upload error: );
+  if (!res.ok) throw new Error(`Upload error: ${res.status}`);
   return res.json();
 }
 
 export async function reloadDocuments(): Promise<{ status: string; chunks: number }> {
-  const res = await fetch(${API_BASE}/api/admin/documents/reload, { method: 'POST' });
-  if (!res.ok) throw new Error(API error: );
+  const res = await fetch(`${API_BASE}/api/admin/documents/reload`, { method: "POST" });
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
