@@ -53,6 +53,20 @@ def get_llm():
 def format_docs(docs):
     return "\n\n".join(d.page_content[:500] for d in docs)
 
+def _count_chunks():
+    import psycopg2
+    conn = psycopg2.connect(
+        host=settings.PGVECTOR_HOST, port=settings.PGVECTOR_PORT,
+        user=settings.PGVECTOR_USER, password=settings.PGVECTOR_PASSWORD,
+        dbname=settings.PGVECTOR_DATABASE, connect_timeout=5
+    )
+    cur = conn.cursor()
+    cur.execute("SELECT count(*) FROM langchain_pg_embedding")
+    count = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return count
+
 class RAGService:
     def __init__(self):
         self._initialized = False
@@ -62,7 +76,7 @@ class RAGService:
             return
         vs = get_vector_store()
         try:
-            import psycopg2; conn=psycopg2.connect(host=settings.PGVECTOR_HOST,port=settings.PGVECTOR_PORT,user=settings.PGVECTOR_USER,password=settings.PGVECTOR_PASSWORD,dbname=settings.PGVECTOR_DATABASE); cur=conn.cursor(); cur.execute('SELECT count(*) FROM langchain_pg_embedding'); count=cur.fetchone()[0]; cur.close(); conn.close()
+            count = _count_chunks()
         except Exception:
             count = 0
         if count == 0:
@@ -89,7 +103,7 @@ class RAGService:
                         except Exception as e:
                             print(f"  [WARN] {fp.name}: {e}")
                 try:
-                    import psycopg2; conn=psycopg2.connect(host=settings.PGVECTOR_HOST,port=settings.PGVECTOR_PORT,user=settings.PGVECTOR_USER,password=settings.PGVECTOR_PASSWORD,dbname=settings.PGVECTOR_DATABASE); cur=conn.cursor(); cur.execute('SELECT count(*) FROM langchain_pg_embedding'); count=cur.fetchone()[0]; cur.close(); conn.close()
+                    count = _count_chunks()
                 except Exception:
                     count = 0
         print(f"[READY] pgvector: {count} chunks, LLM: {get_llm().model_name}")
@@ -132,11 +146,9 @@ class RAGService:
     def get_info(self) -> dict:
         count = 0
         try:
-            if not self._initialized:
-                self.initialize()
-            import psycopg2; conn=psycopg2.connect(host=settings.PGVECTOR_HOST,port=settings.PGVECTOR_PORT,user=settings.PGVECTOR_USER,password=settings.PGVECTOR_PASSWORD,dbname=settings.PGVECTOR_DATABASE); cur=conn.cursor(); cur.execute('SELECT count(*) FROM langchain_pg_embedding'); count=cur.fetchone()[0]; cur.close(); conn.close()
+            count = _count_chunks()
         except Exception as e:
-            print(f"[WARN] get_info failed: {e}")
+            print(f"[WARN] get_info count failed: {e}")
         from . import cache_service
         return {"chunks": count, "llm": getattr(get_llm(), "model_name", "?"), "emb": getattr(settings, "EMBEDDING_MODEL", "?"), "vector_store": "pgvector", "cache": "redis" if cache_service.ping() else "none"}
 
@@ -171,5 +183,3 @@ class RAGService:
         self.initialize()
 
 rag_service = RAGService()
-
-
