@@ -1,4 +1,4 @@
-# Day 6 — Agent + RAG 集成 学习笔记
+﻿# Day 6 — Agent + RAG 集成 学习笔记
 
 > 日期：2026-05-30
 > 产出：agent.py
@@ -516,6 +516,6 @@ Day 6 让 Agent 能自主选择工具了，但还有改进空间：
 
 ```bash
 conda activate rag
-set DEEPSEEK_API_KEY=sk-5f2d1af8c0f94a15be4ff72a53b49fd3
+set DEEPSEEK_API_KEY=your-deepseek-api-key
 python day6/agent.py
 ```

@@ -145,7 +145,7 @@ REST_FRAMEWORK = {
 
 # LangChain / RAG config
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "auto")
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "sk-5f2d1af8c0f94a15be4ff72a53b49fd3")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "your-deepseek-api-key")
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

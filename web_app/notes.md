@@ -90,9 +90,10 @@ conda run -n rag python -c "import psycopg2; conn=psycopg2.connect(host='192.168
 
 ```powershell
 cd D:\code\RAG\web_app\backend
-$env:DEEPSEEK_API_KEY="sk-5f2d1af8c0f94a15be4ff72a53b49fd3"
-$env:DEEPSEEK_MODEL="deepseek-v4-flash"
 conda activate rag
+$env:HF_HUB_OFFLINE="1"  # 必须，否则嵌入模型加载会卡死
+$env:DEEPSEEK_API_KEY="your-deepseek-api-key"
+$env:DEEPSEEK_MODEL="deepseek-v4-flash"
 python manage.py runserver 127.0.0.1:18762
 ```
 
@@ -102,7 +103,6 @@ python manage.py runserver 127.0.0.1:18762
 cd D:\code\RAG\web_app\frontend_vue
 npm run dev
 ```
-
 ### 访问
 
 | 页面 | 地址 |
@@ -251,7 +251,8 @@ doc = Document(page_content=row[0], metadata={**(row[1] or {}), "score": row[2] 
 
 ### 9.3 pgvector 向量全部为 NULL
 
-**现象**：API 返回 etrieval_count: 0，即使数据库有 130 条记录
+**现象**：API 返回 
+etrieval_count: 0，即使数据库有 130 条记录
 
 **原因**：从旧系统迁移数据时，只迁移了 content 和 metadata 字段，embedding 向量没生成。
 

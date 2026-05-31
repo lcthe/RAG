@@ -25,7 +25,7 @@ cd D:\code\RAG\web_app\backend
 
 # ⚠️ 必须设置以下环境变量
 $env:HF_HUB_OFFLINE=""1""         # 强制离线加载嵌入模型（否则会卡在 HuggingFace 联网检查）
-$env:DEEPSEEK_API_KEY=""sk-5f2d1af8c0f94a15be4ff72a53b49fd3""
+$env:DEEPSEEK_API_KEY=""your-deepseek-api-key""
 $env:DEEPSEEK_MODEL=""deepseek-v4-flash""
 
 python manage.py runserver 127.0.0.1:18762
@@ -69,7 +69,8 @@ npm run dev
 | DEEPSEEK_API_KEY | - | DeepSeek API 密钥 |
 | DEEPSEEK_MODEL | deepseek-v4-flash | LLM 模型名称 |
 | LLM_PROVIDER | uto | LLM 供应商：auto / openai / deepseek / mock |
-| REDIS_URL | edis://:redis110110!%40%23Eq@192.168.31.124:6379/0 | Redis 连接 |
+| REDIS_URL | 
+edis://:redis110110!%40%23Eq@192.168.31.124:6379/0 | Redis 连接 |
 | CHUNK_SIZE | 300 | 文本分块大小 |
 | TOP_K | 5 | 每次检索返回的块数 |
 | EMBEDDING_MODEL | BAAI/bge-small-zh-v1.5 | 本地嵌入模型，从 HuggingFace 离线加载 |

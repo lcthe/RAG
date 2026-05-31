@@ -1,4 +1,4 @@
-# Day 7 — 评估与优化 学习笔记
+﻿# Day 7 — 评估与优化 学习笔记
 
 > 日期：2026-05-30
 > 产出：evaluate.py, test_cases.json
@@ -405,7 +405,7 @@ Dify 有完整的 CI/CD + 评估流水线。LlamaIndex 有 EvaluationModule。
 
 ```bash
 conda activate rag
-set DEEPSEEK_API_KEY=sk-5f2d1af8c0f94a15be4ff72a53b49fd3
+set DEEPSEEK_API_KEY=your-deepseek-api-key
 set HF_HUB_OFFLINE=1
 set TRANSFORMERS_OFFLINE=1
 python day7/evaluate.py
