@@ -92,7 +92,8 @@ conda run -n rag python -c "import psycopg2; conn=psycopg2.connect(host='192.168
 cd D:\code\RAG\web_app\backend
 $env:DEEPSEEK_API_KEY="sk-5f2d1af8c0f94a15be4ff72a53b49fd3"
 $env:DEEPSEEK_MODEL="deepseek-v4-flash"
-conda run -n rag python manage.py runserver 127.0.0.1:18762
+conda activate rag
+python manage.py runserver 127.0.0.1:18762
 ```
 
 ### 启动前端

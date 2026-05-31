@@ -88,7 +88,7 @@ docker start redis
 cd D:\code\RAG\web_app\backend
 $env:DEEPSEEK_API_KEY="sk-your-key-here"
 $env:DEEPSEEK_MODEL="deepseek-v4-flash"
-conda run -n rag python manage.py runserver 127.0.0.1:18762
+conda activate rag`npython manage.py runserver 127.0.0.1:18762
 ```
 
 #### 3. 启动前端（Vue 3，新终端）
