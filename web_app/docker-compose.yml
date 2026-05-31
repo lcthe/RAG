@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   redis:
     image: redis:7-alpine
@@ -5,12 +7,33 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - rag-redis-data:/data
+      - redis_data:/data
+    restart: unless-stopped
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: rag
+      POSTGRES_PASSWORD: rag_pass
+      POSTGRES_DB: rag
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag"]
+      interval: 5s
+      timeout: 3s
       retries: 3
 
 volumes:
-  rag-redis-data:
+  redis_data:
+  pgvector_data:

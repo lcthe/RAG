@@ -33,3 +33,5 @@ web_app/backend/*.db
 # Temp
 body.json
 fix_docs.py
+
+*.sqlite3
