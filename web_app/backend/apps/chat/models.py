@@ -1,7 +1,9 @@
-"""Chat models."""
+﻿"""Chat models."""
+import uuid
 from django.db import models
 
 class Conversation(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255, blank=True, verbose_name="标题")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")

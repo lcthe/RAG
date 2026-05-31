@@ -1,5 +1,5 @@
-"""Chat API views."""
-import json, time
+﻿"""Chat API views."""
+import json, time, uuid
 from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
@@ -25,7 +25,6 @@ def chat(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    # Log
     QueryLog.objects.create(
         question=question,
         answer_preview=result.get("answer", "")[:200],
@@ -43,16 +42,22 @@ def info(request):
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class ConversationViewSet(viewsets.ModelViewSet):
-    queryset = Conversation.objects.all()
-    
-    def get_serializer_class(self):
-        if self.action == "list":
-            return ConversationListSerializer
-        return ConversationSerializer
-    
-    def perform_create(self, serializer):
-        serializer.save()
+# ====== 对话历史管理 ======
+
+@api_view(["GET"])
+def list_conversations(request):
+    convs = Conversation.objects.all().order_by("-created_at")
+    ser = ConversationListSerializer(convs, many=True)
+    return Response(ser.data)
+
+@api_view(["GET"])
+def get_conversation_detail(request, conv_id):
+    try:
+        conv = Conversation.objects.get(id=conv_id)
+    except Conversation.DoesNotExist:
+        return Response({"error": "not found"}, status=status.HTTP_404_NOT_FOUND)
+    ser = ConversationSerializer(conv)
+    return Response(ser.data)
 
 @api_view(["POST"])
 def save_conversation(request):
@@ -60,9 +65,15 @@ def save_conversation(request):
     conv_id = data.get("id")
     messages = data.get("messages", [])
     title = data.get("title", "")
-    
+
     with transaction.atomic():
-        conv, _ = Conversation.objects.get_or_create(id=conv_id)
+        if conv_id:
+            try:
+                conv = Conversation.objects.get(id=conv_id)
+            except Conversation.DoesNotExist:
+                conv = Conversation(id=conv_id)
+        else:
+            conv = Conversation()
         if title:
             conv.title = title
         conv.save()
@@ -76,7 +87,7 @@ def save_conversation(request):
                 latency_ms=msg.get("latency_ms", 0),
                 model_used=msg.get("model", ""),
             )
-    return Response({"status": "ok"})
+    return Response({"status": "ok", "id": str(conv.id)})
 
 @api_view(["DELETE"])
 def delete_conversation(request, conv_id):
