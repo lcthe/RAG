@@ -35,3 +35,7 @@ body.json
 fix_docs.py
 
 *.sqlite3
+
+# Server logs
+web_app/server.log
+web_app/server_err.log
