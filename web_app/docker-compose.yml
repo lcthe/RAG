@@ -1,11 +1,16 @@
-﻿services:
+services:
   redis:
     image: redis:7-alpine
-    container_name: rag-redis
+    container_name: redis
     ports:
       - "6379:6379"
+    volumes:
+      - rag-redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+
+volumes:
+  rag-redis-data:

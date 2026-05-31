@@ -83,11 +83,12 @@ set DEEPSEEK_API_KEY=sk-your-key-here
 set DEEPSEEK_MODEL=deepseek-v4-flash
 rem set OPENAI_API_KEY=sk-your-key-here
 
-# 4. Start backend
+# 4. Start backend（use conda env）
 cd D:\code\RAG
+conda activate rag
 set TRANSFORMERS_OFFLINE=1
 set HF_HUB_OFFLINE=1
-conda run -n rag python -m uvicorn web_app.backend.app.main:app --host 127.0.0.1 --port 18762
+python -u -m uvicorn web_app.backend.app.main:app --host 127.0.0.1 --port 18762 --log-level info
 
 # 5. Start frontend（new terminal）
 cd D:\code\RAG\web_app\frontend && npm run dev
