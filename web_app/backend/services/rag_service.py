@@ -1,19 +1,21 @@
 ﻿"""LangChain-powered RAG service with pgvector."""
 import os, time, traceback
 from pathlib import Path
+from urllib.parse import quote
 from django.conf import settings
 
-from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_postgres import PGVector
 from .llm_service import llm_client
 
 # ---- pgvector connection ----
-PG_CONNECTION_STRING = (
-    f"postgresql+psycopg2://{settings.PGVECTOR_USER}:{settings.PGVECTOR_PASSWORD}"
-    f"@{settings.PGVECTOR_HOST}:{settings.PGVECTOR_PORT}/{settings.PGVECTOR_DATABASE}"
-)
+def _pg_connection_string():
+    pw = quote(settings.PGVECTOR_PASSWORD)
+    return (
+        f"postgresql+psycopg2://{settings.PGVECTOR_USER}:{pw}"
+        f"@{settings.PGVECTOR_HOST}:{settings.PGVECTOR_PORT}/{settings.PGVECTOR_DATABASE}"
+    )
+
 COLLECTION_NAME = "rag_docs"
 
 _emb_model = None
@@ -35,7 +37,7 @@ def get_vector_store():
     if _vec_store is None:
         _vec_store = PGVector(
             collection_name=COLLECTION_NAME,
-            connection=PG_CONNECTION_STRING,
+            connection=_pg_connection_string(),
             embeddings=get_embeddings(),
             use_jsonb=True,
         )
@@ -47,11 +49,6 @@ def get_llm():
     if _llm_client is None:
         _llm_client = llm_client
     return _llm_client
-
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "{context}"),
-    ("human", "{question}"),
-])
 
 def format_docs(docs):
     return "\n\n".join(d.page_content[:500] for d in docs)
@@ -65,7 +62,7 @@ class RAGService:
             return
         vs = get_vector_store()
         try:
-            count = vs._collection.count()
+            import psycopg2; conn=psycopg2.connect(host=settings.PGVECTOR_HOST,port=settings.PGVECTOR_PORT,user=settings.PGVECTOR_USER,password=settings.PGVECTOR_PASSWORD,dbname=settings.PGVECTOR_DATABASE); cur=conn.cursor(); cur.execute('SELECT count(*) FROM langchain_pg_embedding'); count=cur.fetchone()[0]; cur.close(); conn.close()
         except Exception:
             count = 0
         if count == 0:
@@ -92,7 +89,7 @@ class RAGService:
                         except Exception as e:
                             print(f"  [WARN] {fp.name}: {e}")
                 try:
-                    count = vs._collection.count()
+                    import psycopg2; conn=psycopg2.connect(host=settings.PGVECTOR_HOST,port=settings.PGVECTOR_PORT,user=settings.PGVECTOR_USER,password=settings.PGVECTOR_PASSWORD,dbname=settings.PGVECTOR_DATABASE); cur=conn.cursor(); cur.execute('SELECT count(*) FROM langchain_pg_embedding'); count=cur.fetchone()[0]; cur.close(); conn.close()
                 except Exception:
                     count = 0
         print(f"[READY] pgvector: {count} chunks, LLM: {get_llm().model_name}")
@@ -133,13 +130,13 @@ class RAGService:
         return response
 
     def get_info(self) -> dict:
-        if not self._initialized:
-            self.initialize()
         count = 0
         try:
-            count = get_vector_store()._collection.count()
-        except Exception:
-            pass
+            if not self._initialized:
+                self.initialize()
+            import psycopg2; conn=psycopg2.connect(host=settings.PGVECTOR_HOST,port=settings.PGVECTOR_PORT,user=settings.PGVECTOR_USER,password=settings.PGVECTOR_PASSWORD,dbname=settings.PGVECTOR_DATABASE); cur=conn.cursor(); cur.execute('SELECT count(*) FROM langchain_pg_embedding'); count=cur.fetchone()[0]; cur.close(); conn.close()
+        except Exception as e:
+            print(f"[WARN] get_info failed: {e}")
         from . import cache_service
         return {"chunks": count, "llm": getattr(get_llm(), "model_name", "?"), "emb": getattr(settings, "EMBEDDING_MODEL", "?"), "vector_store": "pgvector", "cache": "redis" if cache_service.ping() else "none"}
 
@@ -174,3 +171,5 @@ class RAGService:
         self.initialize()
 
 rag_service = RAGService()
+
+

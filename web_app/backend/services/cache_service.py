@@ -1,8 +1,9 @@
-"""Redis cache service."""
+﻿"""Redis cache service."""
 import os, json, hashlib
+from django.conf import settings
 try:
     import redis as redis_lib
-    _redis = redis_lib.from_url(os.getenv("REDIS_URL", "redis://localhost:6379/0"))
+    _redis = redis_lib.from_url(settings.REDIS_URL)
     _redis.ping()
     _available = True
 except Exception:
@@ -50,3 +51,4 @@ def ping():
         return _redis.ping()
     except Exception:
         return False
+
