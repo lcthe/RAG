@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+﻿from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Document
@@ -9,6 +9,7 @@ from services.rag_service import rag_service
 class DocumentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
+    pagination_class = None
     
     @action(detail=False, methods=["post"])
     def upload(self, request):
@@ -33,3 +34,4 @@ class DocumentViewSet(viewsets.ReadOnlyModelViewSet):
     def reload(self, request):
         rag_service.reload()
         return Response({"status": "ok", "message": "Reload started"})
+
