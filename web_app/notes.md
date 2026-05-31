@@ -215,3 +215,66 @@ Day1-7 只有命令行输出，Web App 提供了：
 - **版本控制**：Git 提交规范、CI 就绪
 - **文档**：中英文双语 README + 学习笔记
 - **日志**：Django 日志系统，不是 print
+
+---
+
+## 9. 开发中遇到的关键问题与修复
+
+### 9.1 嵌入模型加载卡死
+
+**现象**：Chat API 请求超时（>60s），首次请求返回 500 或卡死
+
+**原因**：HuggingFaceEmbeddings 加载时默认会联网检查模型更新。在无互联网环境或网络不通时，huggingface_hub 的连接请求会一直阻塞，直到超时（约 3 分钟）。
+
+**修复**：启动前设置环境变量 HF_HUB_OFFLINE=1，强制离线加载。
+
+`python
+# rag_service.py 中
+os.environ.setdefault(\"HF_HUB_OFFLINE\", \"1\")
+`
+
+模型已缓存到 C:\Users\Administrator\.cache\huggingface\hub\models--BAAI--bge-small-zh-v1.5\，离线加载约需 5 秒。
+
+### 9.2 Document 对象属性错误
+
+**现象**：Chat API 返回 "抱歉，处理您的请求时出现错误"
+
+**原因**：新版 langchain_core 的 Document 类是 Pydantic BaseModel，不允许动态属性赋值。
+`python
+# ❌ 旧代码（报错）
+doc = Document(page_content=row[0], metadata={})
+doc.score = row[2]  # ValueError: "Document" object has no field "score"
+
+# ✅ 新代码
+doc = Document(page_content=row[0], metadata={**(row[1] or {}), "score": row[2] or 0})
+`
+
+### 9.3 pgvector 向量全部为 NULL
+
+**现象**：API 返回 etrieval_count: 0，即使数据库有 130 条记录
+
+**原因**：从旧系统迁移数据时，只迁移了 content 和 metadata 字段，embedding 向量没生成。
+
+**修复**：重新计算所有文本的嵌入向量并写入数据库。PGVECTOR 查询加了 WHERE embedding IS NOT NULL 避免 NULL 导致运算错误。
+
+### 9.4 Redis 缓存影响调试
+
+**现象**：修改代码后测试，API 返回旧结果
+
+**原因**：Redis 缓存 TTL 为 3600 秒（1 小时），同一个问题的请求会直接返回缓存。
+
+**修复**：开发调试时可以手动清除缓存：
+`python
+import redis
+r = redis.from_url(\"redis://...\")
+for k in r.scan_iter(\"rag:q:*\"):
+    r.delete(k)
+`
+
+### 9.5 环境变量传递问题
+
+**现象**：在终端设了环境变量，但启动 Django 后仍然找不到 API Key 或嵌入模型卡死
+
+**原因**：通过 Start-Process 启动新 PowerShell 进程时，父进程的环境变量不会自动继承。
+
+**解决**：要么在同一个终端内直接运行，要么使用 .bat 批处理脚本设置变量。

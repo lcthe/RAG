@@ -39,3 +39,12 @@ fix_docs.py
 # Server logs
 web_app/server.log
 web_app/server_err.log
+
+# Server temp logs
+web_app/backend/_srv*.log
+web_app/backend/_server*.log
+web_app/backend/_start_srv.bat
+web_app/backend/_test_*.py
+web_app/backend/_check_*.py
+web_app/backend/_compute_*.py
+web_app/scripts/

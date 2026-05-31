@@ -93,3 +93,4 @@ def save_conversation(request):
 def delete_conversation(request, conv_id):
     Conversation.objects.filter(id=conv_id).delete()
     return Response({"status": "ok"})
+
