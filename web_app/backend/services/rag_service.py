@@ -1,4 +1,4 @@
-"""LangChain-powered RAG service with ChromaDB + requests-based LLM."""
+﻿"""LangChain-powered RAG service with pgvector."""
 import os, time, traceback
 from pathlib import Path
 from django.conf import settings
@@ -6,10 +6,15 @@ from django.conf import settings
 from langchain_chroma import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_postgres import PGVector
 from .llm_service import llm_client
 
-CHROMA_DIR = os.path.join(settings.BASE_DIR, "data", "chroma_db")
-os.makedirs(CHROMA_DIR, exist_ok=True)
+# ---- pgvector connection ----
+PG_CONNECTION_STRING = (
+    f"postgresql+psycopg2://{settings.PGVECTOR_USER}:{settings.PGVECTOR_PASSWORD}"
+    f"@{settings.PGVECTOR_HOST}:{settings.PGVECTOR_PORT}/{settings.PGVECTOR_DATABASE}"
+)
+COLLECTION_NAME = "rag_docs"
 
 _emb_model = None
 def get_embeddings():
@@ -28,10 +33,11 @@ _vec_store = None
 def get_vector_store():
     global _vec_store
     if _vec_store is None:
-        _vec_store = Chroma(
-            collection_name="rag_docs",
-            embedding_function=get_embeddings(),
-            persist_directory=CHROMA_DIR,
+        _vec_store = PGVector(
+            collection_name=COLLECTION_NAME,
+            connection=PG_CONNECTION_STRING,
+            embeddings=get_embeddings(),
+            use_jsonb=True,
         )
     return _vec_store
 
@@ -40,18 +46,10 @@ def get_llm():
     global _llm_client
     if _llm_client is None:
         _llm_client = llm_client
-        print(f"[LLM] {_llm_client.model_name}")
     return _llm_client
 
-SYSTEM_PROMPT = """你是一个智能助手，基于知识库内容回答问题。
-只根据提供的上下文回答，没有相关信息就坦诚告知。
-回答简洁准确，使用中文。
-
-上下文内容：
-{context}"""
-
 prompt = ChatPromptTemplate.from_messages([
-    ("system", SYSTEM_PROMPT),
+    ("system", "{context}"),
     ("human", "{question}"),
 ])
 
@@ -67,17 +65,17 @@ class RAGService:
             return
         vs = get_vector_store()
         try:
-            count = len(vs.get()["ids"])
+            count = vs._collection.count()
         except Exception:
             count = 0
         if count == 0:
-            print("[INGEST] Loading documents...")
+            print("[INGEST] Loading documents into pgvector...")
             data_dir = Path(getattr(settings, "DATA_DIR", str(Path(__file__).resolve().parent.parent.parent.parent / "data")))
             if data_dir.exists():
-                import sys as _sys
-                _root = Path(__file__).resolve().parent.parent.parent.parent
+                import sys
+                root = Path(__file__).resolve().parent.parent.parent.parent
                 for d in ["day1", "day2", "day3", "day4", "day5", "day6"]:
-                    _sys.path.insert(0, str(_root / d))
+                    sys.path.insert(0, str(root / d))
                 from document_loader import DocumentLoader
                 from text_splitter import get_splitter
                 loader = DocumentLoader()
@@ -94,10 +92,10 @@ class RAGService:
                         except Exception as e:
                             print(f"  [WARN] {fp.name}: {e}")
                 try:
-                    count = len(vs.get()["ids"])
+                    count = vs._collection.count()
                 except Exception:
                     count = 0
-        print(f"[READY] VectorStore: {count} chunks, LLM: {get_llm().model_name}")
+        print(f"[READY] pgvector: {count} chunks, LLM: {get_llm().model_name}")
         self._initialized = True
 
     def query(self, question: str, top_k: int | None = None) -> dict:
@@ -114,10 +112,8 @@ class RAGService:
         retriever = vs.as_retriever(search_kwargs={"k": k})
         start = time.time()
         try:
-            # Retrieve
             docs = retriever.invoke(question)
             context = format_docs(docs)
-            # Build messages for LLM
             messages = [
                 {"role": "system", "content": f"你是一个智能助手，基于知识库内容回答问题。\n只根据提供的上下文回答，没有相关信息就坦诚告知。\n回答简洁准确，使用中文。\n\n上下文内容：\n{context}"},
                 {"role": "user", "content": question},
@@ -141,17 +137,17 @@ class RAGService:
             self.initialize()
         count = 0
         try:
-            count = len(get_vector_store().get()["ids"])
+            count = get_vector_store()._collection.count()
         except Exception:
             pass
         from . import cache_service
-        return {"chunks": count, "llm": getattr(get_llm(), "model_name", "?"), "emb": getattr(settings, "EMBEDDING_MODEL", "?"), "vector_store": "chroma", "cache": "redis" if cache_service.ping() else "none"}
+        return {"chunks": count, "llm": getattr(get_llm(), "model_name", "?"), "emb": getattr(settings, "EMBEDDING_MODEL", "?"), "vector_store": "pgvector", "cache": "redis" if cache_service.ping() else "none"}
 
     def ingest_file(self, filepath: str) -> int:
-        import sys as _sys
-        _root = Path(__file__).resolve().parent.parent.parent.parent
+        import sys
+        root = Path(__file__).resolve().parent.parent.parent.parent
         for d in ["day1", "day2", "day3", "day4", "day5", "day6"]:
-            _sys.path.insert(0, str(_root / d))
+            sys.path.insert(0, str(root / d))
         from document_loader import DocumentLoader
         from text_splitter import get_splitter
         loader = DocumentLoader()
@@ -164,10 +160,11 @@ class RAGService:
         return len(chunks)
 
     def clear_data(self):
-        vs = get_vector_store()
-        ids = vs.get()["ids"]
-        if ids:
-            vs.delete(ids)
+        try:
+            vs = get_vector_store()
+            vs.delete_collection()
+        except Exception:
+            pass
         from . import cache_service
         cache_service.invalidate_cache()
         self._initialized = False

@@ -1,121 +1,145 @@
-# Day 8 — Web App 前后端整合 学习笔记
+﻿# RAG Web App 学习笔记
 
-> 日期：2026-05-31
-> 目录：web_app/
-> 技术栈：Next.js + TypeScript（前端）+ FastAPI + ChromaDB + Redis（后端）
-
----
-
-## 一、今天做了什么
-
-把 Day1-Day7 的 RAG 核心模块整合成一个完整的 Web 应用：
-
-- **前端**：Next.js + TypeScript，用户端对话界面 + 后台管理面板
-- **后端**：FastAPI + Uvicorn，RESTful API 服务
-- **向量存储**：ChromaDB（文件持久化，无需 Docker）
-- **缓存**：Redis（Docker 容器部署）
-- **LLM**：DeepSeek API 兼容接口（也可切换 OpenAI / Ollama / Mock）
+> 技术栈：Django 5.2 + DRF（后端）+ Vue 3 + Vite（前端）+ pgvector（向量数据库）+ Redis（缓存）
+> LLM：DeepSeek API（兼容 OpenAI 协议）
+> 嵌入模型：BAAI/bge-small-zh-v1.5（本地离线）
 
 ---
 
-## 二、项目结构
+## 一、项目架构
+
+```
+用户浏览器 (Vue 3 + Vite :19123)
+        │
+        ├── /api/* ──→ Django REST API (:18762)
+        │                    ├── /api/chat/         对话问答
+        │                    ├── /api/chat/info/    系统信息
+        │                    ├── /api/chat/conversations/  对话历史
+        │                    ├── /api/admin/documents/    文档管理
+        │                    └── /api/health/       健康检查
+        │
+        ├── /admin ──→ Vue Admin 管理页面
+        │
+        └── Django Admin (:18762/admin/) 数据库管理
+```
+
+## 二、技术栈
+
+| 分类 | 技术 | 说明 |
+|------|------|------|
+| **后端** | Django 5.2 + Django REST Framework | RESTful API |
+| **前端** | Vue 3 + Vite + Vue Router | SPA 单页应用 |
+| **向量数据库** | pgvector (PostgreSQL 17) | 远程服务器 192.168.31.124:15432 |
+| **缓存** | Redis 7 (Docker) | localhost:6379 |
+| **LLM** | DeepSeek API (requests 库) | 绕过 httpx SSL 问题 |
+| **嵌入模型** | BAAI/bge-small-zh-v1.5 | HuggingFace 本地离线 |
+
+## 三、项目结构
 
 ```
 web_app/
-├── backend/                  # Python FastAPI 后端
-│   ├── app/
-│   │   ├── config.py         # 环境变量配置
-│   │   ├── database.py       # 数据库（SQLite + SQLAlchemy）
-│   │   ├── main.py           # FastAPI 入口 + 生命周期
-│   │   ├── models/           # 数据模型
-│   │   ├── routes/           # API 路由
-│   │   │   ├── chat.py       # 对话 + 历史记录 API
-│   │   │   └── admin.py      # 管理后台 API
-│   │   └── services/         # 业务逻辑
-│   │       ├── rag_service.py    # 核心 RAG 服务
-│   │       ├── llm_service.py    # LLM 抽象层
-│   │       ├── vector_store.py   # ChromaDB 封装
-│   │       └── cache_service.py  # Redis 缓存
-│   └── data/                 # 运行时数据（logs, chroma_db）
-├── frontend/                 # Next.js 前端
+├── backend/                    # Django 项目
+│   ├── config/                 # 项目配置
+│   │   ├── settings.py         # 数据库、RAG、LLM 配置
+│   │   ├── urls.py             # 根路由
+│   │   ├── asgi.py / wsgi.py   # 部署入口
+│   ├── apps/                   # Django App
+│   │   ├── chat/               # 对话模块
+│   │   │   ├── models.py       # Conversation, Message, QueryLog
+│   │   │   ├── views.py        # 对话 API
+│   │   │   ├── serializers.py  # 序列化
+│   │   │   └── urls.py         # 路由
+│   │   └── knowledge/          # 知识库模块
+│   │       ├── models.py       # Document
+│   │       ├── views.py        # 文档管理 API
+│   │       └── urls.py
+│   ├── services/               # 核心服务
+│   │   ├── rag_service.py      # RAG 主逻辑（pgvector）
+│   │   ├── llm_service.py      # LLM 抽象层（requests 版）
+│   │   └── cache_service.py    # Redis 缓存
+│   ├── data/                   # 运行时数据
+│   └── manage.py
+├── frontend_vue/               # Vue 3 前端
 │   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx          # 用户端对话页
-│   │   │   ├── layout.tsx        # 全局布局
-│   │   │   └── admin/            # 管理后台
-│   │   │       ├── page.tsx      # 概览页
-│   │   │       └── documents/
-│   │   │           └── page.tsx  # 文档管理页
-│   │   └── lib/
-│   │       └── api.ts       # API 调用封装
-│   ├── next.config.ts       # Next.js 配置（代理重写）
-│   └── package.json
-├── scripts/                 # 部署运维脚本
-├── docker-compose.yml       # Docker 编排（Redis）
+│   │   ├── api/index.ts        # API 客户端
+│   │   ├── views/
+│   │   │   ├── Chat.vue        # 问答页面（MaxKB 风格）
+│   │   │   └── Admin.vue       # 后台管理页
+│   │   ├── router/index.ts     # 路由
+│   │   └── App.vue             # 根组件
+│   └── vite.config.ts          # Vite 配置（代理 :18762）
+├── scripts/
+│   └── start.ps1
+├── docker-compose.yml          # Redis + pgvector
 └── README.md
 ```
 
-## 五、后端核心流程
+## 四、启动方式
 
-### 5.1 启动生命周期（main.py）
-
-```
-1. 初始化 RAGService
-2. 初始化 ChromaDB
-3. 调用 RAGService.initialize()
-   ├── 建 SQLite 表（查询日志）
-   ├── 检查 ChromaDB 是否为空
-   └── 若为空 → 自动从 data/ 目录 ingest 文档
-4. 打印就绪信息：[READY] ChromaDB: N chunks, LLM: xxx
-5. 开始接收请求
-```
-
-### 5.2 对话流程（rag_service.py）
-
-```
-POST /api/chat { question, top_k }
-    │
-    ├─ 1. Embedding 编码问题
-    ├─ 2. ChromaDB 向量检索（top_k 条）
-    ├─ 3. 问候语检测（直接返回，不调 LLM）
-    ├─ 4. Redis 缓存检查（命中直接返回）
-    ├─ 5. 组装 Context → Prompt
-    ├─ 6. LLM 生成回答
-    ├─ 7. Redis 缓存结果
-    └─ 8. 返回 { answer, sources, latency_ms, model }
-```
-
-### 5.3 LLM 自动选择（llm_service.py）
-
-```
-get_llm("auto"):
-  1. 有 OPENAI_API_KEY → 用 OpenAI
-  2. 有 DEEPSEEK_API_KEY → 用 DeepSeek（兼容 OpenAI 协议）
-  3. 有 OLLAMA_BASE_URL → 用 Ollama
-  4. 都没有 → 用 MockLLM（返回 context 片段）
-```
-
----
-
-## 七、启动方式
-
-### 完整启动（前后端 + Redis）
+### 前置条件
 
 ```powershell
 # 1. 启动 Redis（Docker）
 docker start redis
 
-# 2. 启动后端
-conda activate rag
-$env:DEEPSEEK_API_KEY="sk-xxx"
-$env:DEEPSEEK_MODEL="deepseek-v4-flash"
-uvicorn web_app.backend.app.main:app --host 127.0.0.1 --port 18762 --log-level info
-
-# 3. 启动前端（新终端）
-cd web_app\frontend
-npx next dev --port 19123
-
-# 4. 浏览器访问
-#    用户端：http://localhost:19123/
-#    管理端：http://localhost:19123/admin
+# 2. 确认 pgvector 可用
+conda run -n rag python -c "import psycopg2; conn=psycopg2.connect(host='192.168.31.124',port=15432,user='postgres',password='...',dbname='rag'); print('pgvector OK'); conn.close()"
 ```
+
+### 启动后端
+
+```powershell
+cd D:\code\RAG\web_app\backend
+$env:DEEPSEEK_API_KEY="sk-5f2d1af8c0f94a15be4ff72a53b49fd3"
+$env:DEEPSEEK_MODEL="deepseek-v4-flash"
+conda run -n rag python manage.py runserver 127.0.0.1:18762
+```
+
+### 启动前端
+
+```powershell
+cd D:\code\RAG\web_app\frontend_vue
+npm run dev
+```
+
+### 访问
+
+| 页面 | 地址 |
+|------|------|
+| 💬 问答页 | http://localhost:19123/ |
+| ⚙️ 管理后台 | http://localhost:19123/admin |
+| 🔌 Django Admin | http://localhost:18762/admin/ (admin / admin123) |
+
+## 五、API 接口
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/chat/` | POST | 发送问题 { question, top_k? } |
+| `/api/chat/info/` | GET | 系统运行信息 |
+| `/api/chat/conversations/` | GET | 对话历史列表 |
+| `/api/chat/conversations/:id/` | GET | 对话详情 |
+| `/api/chat/save_conversation/` | POST | 保存对话 |
+| `/api/chat/delete_conversation/:id/` | DELETE | 删除对话 |
+| `/api/admin/documents/` | GET | 文档列表 |
+| `/api/admin/documents/upload/` | POST | 上传文档 |
+| `/api/admin/documents/reload/` | POST | 重新加载向量库 |
+| `/api/health/` | GET | 健康检查 |
+
+## 六、RAG 核心流程
+
+```
+POST /api/chat/ { question, top_k }
+    │
+    ├─ 1. 嵌入模型编码问题
+    ├─ 2. pgvector 向量检索（top_k 条）
+    ├─ 3. Redis 缓存检查（命中直接返回）
+    ├─ 4. 组装 Context → 调用 LLM
+    ├─ 5. Redis 缓存结果
+    └─ 6. 返回 { answer, sources, latency_ms, model }
+```
+
+## 七、数据库
+
+- **PostgreSQL 17**（远程）：Django 主数据库 + pgvector 向量存储
+- **Redis 7**（Docker）：查询结果缓存
+- **SQLite**：已废弃，全部迁移到 PostgreSQL
